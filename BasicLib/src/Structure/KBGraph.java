@@ -2,6 +2,12 @@
 
 package Structure;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -11,7 +17,7 @@ import java.util.Map;
  * @author lsl
  * @description undirected
  */
-public class KBGraph
+public class KBGraph implements Serializable
 {
     private int edgeCount;
     private int nodeCount;
@@ -22,6 +28,7 @@ public class KBGraph
 
     public int getEdgeCount(){  return edgeCount;}
     public int getNodeCount(){  return nodeCount;}
+    
     public boolean addEdge(String beginNode, String endNode, String edge)
     {
         if(!nodeDic.containsKey(beginNode))
@@ -59,4 +66,22 @@ public class KBGraph
         edges.put(nodeDic.get(node), new HashMap());
         return true;
     }
+    
+    public void serialize(String path) throws IOException
+    {
+    	ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(path));
+    	oos.writeObject(this);
+    	oos.close();
+    }
+    
+    public static KBGraph deserialize(String path) throws IOException, ClassNotFoundException
+    {
+    	ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path));
+    	KBGraph kbg = (KBGraph)ois.readObject();
+    	ois.close();
+    	return kbg;
+    }
 }
+
+
+
