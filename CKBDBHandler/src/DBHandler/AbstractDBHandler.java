@@ -1,5 +1,4 @@
 
-
 package DBHandler;
 
 import java.util.List;
@@ -19,7 +18,7 @@ public interface AbstractDBHandler
 
 	public abstract List<String> getElementIDbyKeyword(String keyword);
 
-	public abstract List<String> select(String s, String p, String o);
+	public abstract List<String> selectID(String s, String p, String o);
 
 
 
