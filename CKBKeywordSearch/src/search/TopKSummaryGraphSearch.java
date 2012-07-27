@@ -76,6 +76,7 @@ public class TopKSummaryGraphSearch implements AbstractSearch
         	for(String type : pair.getValue())
         		augGraph.addEdge(literal, type, "unname");
         }
+        //Top-k search
         
         return new KBGraph();
     }
