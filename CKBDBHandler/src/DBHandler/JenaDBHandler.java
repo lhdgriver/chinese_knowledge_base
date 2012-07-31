@@ -4,8 +4,6 @@ package DBHandler;
 
 import java.util.List;
 
-import com.hp.hpl.jena.rdf.model.Resource;
-
 /**
  * @date 2012-7-12
  * @author lsl
@@ -29,11 +27,21 @@ public class JenaDBHandler implements AbstractDBHandler
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-	public List<Resource> getResourcebyLiteral(String literal) {
+    public List<String> select(String s, String p, String o)
+    {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+	@Override
+	public List<String> getElementIDbyLiteral(String keyword) 
+	{
+		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public List<String> selectID(String s, String p, String o) {
+	public List<String> getLiteralbyKeyword(String keyword) 
+	{
+		// TODO Auto-generated method stub
 		return null;
 	}
 
