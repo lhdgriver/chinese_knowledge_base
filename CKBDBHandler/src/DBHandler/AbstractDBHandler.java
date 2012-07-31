@@ -19,7 +19,4 @@ public interface AbstractDBHandler
 	public abstract List<Resource> getResourcebyLiteral(String literal);
 	//查询时有且只有一个参数为null
 	public abstract List<String> selectID(String s, String p, String o);
-
-
-
 }
