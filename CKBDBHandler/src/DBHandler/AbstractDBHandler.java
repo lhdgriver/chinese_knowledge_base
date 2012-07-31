@@ -2,6 +2,8 @@ package DBHandler;
 
 import java.util.List;
 
+import com.hp.hpl.jena.rdf.model.Resource;
+
 /**
  * @date 2012-7-12
  * @author lsl
