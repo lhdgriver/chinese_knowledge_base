@@ -9,5 +9,5 @@ import DBHandler.AbstractDBHandler;
  */
 public interface AbstractSearch
 {
-    
+     
 }
