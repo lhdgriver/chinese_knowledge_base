@@ -21,12 +21,27 @@ import java.util.Set;
  */
 public class TopKSummaryGraphSearch implements AbstractSearch
 {
-    private static AbstractDBHandler  DBHandler = new JenaDBHandler();
+    private static AbstractDBHandler  DBHandler = null;
     private String query = null;
     private List<String> keywords = new ArrayList() ;
     //hash or list ---> tolerant with duplicated keywords
     private Map<String, List<String>> keyLiterals = new HashMap();
     private Map<String, List<String>> literalElements = new HashMap();
+    
+    public TopKSummaryGraphSearch()
+    {
+    	try
+    	{
+    		DBHandler = new JenaDBHandler();
+    	}
+    	catch(Exception ex)
+    	{
+    		System.out.println("DBHandler Initilization Failed");
+    		System.out.println(ex.getMessage());
+    		System.out.println(ex.getStackTrace());
+    	}
+    }
+    
     private void setQuery(String query)
     {
         this.query = query;
@@ -45,6 +60,7 @@ public class TopKSummaryGraphSearch implements AbstractSearch
     public KBGraph search(String query) throws IOException, ClassNotFoundException
     {
         setQuery(query);
+        /*
         //Element Mapping
         for(int i = 0; i < keywords.size(); i++)
         {
@@ -77,7 +93,7 @@ public class TopKSummaryGraphSearch implements AbstractSearch
         		augGraph.addEdge(literal, type, "unname");
         }
         //Top-k search
-        
+        */
         return new KBGraph();
     }
     
