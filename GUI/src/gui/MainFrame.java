@@ -7,6 +7,12 @@ import java.awt.Frame;
 import java.awt.Insets;
 import java.awt.TextField;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.Time;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import javax.swing.Box;
 import javax.swing.Icon;
@@ -29,21 +35,27 @@ import components.CKBButton;
  * @description main frame of this program , mainly get query and present results 
  */
 
-public class MainFrame
+public class MainFrame implements Runnable
 {
 	private static String frameTitle = "中文知识库查询测试";
 	private JFrame mainFrame = new JFrame(frameTitle);
-	private JTextArea queryArea = new JTextArea(3, 40);
-	private JButton queryBt = new JButton(new ImageIcon("material/search-icon.png", "Query"));
+	private JTextArea queryArea = new JTextArea(3, 48);
+	private JButton queryStartBt = new JButton(new ImageIcon("material/start.png", "Query"));
+	private JButton queryStopBt = new JButton(new ImageIcon("material/stop.png", "Stop"));
 	//private CKBButton queryBt = new CKBButton("material/search-icon.png");
-	private JTextArea resultArea = new JTextArea(20,50);
+	private JTextArea resultArea = new JTextArea(20,60);
+	
+	private Thread queryThread = null;
+	private SimpleDateFormat sdf = new SimpleDateFormat(" [yyyy-MM-dd HH:mm:ss]  ",Locale.SIMPLIFIED_CHINESE);
+	private MainFrame self = this;
 	
 	public MainFrame()
 	{
-		Initialize();
+		initialize();
+		addListener();
 	}
 	
-	private void Initialize()
+	private void initialize()
 	{
 		try 
 		{  
@@ -52,8 +64,10 @@ public class MainFrame
         }
 		catch(Exception ex)
 		{}
-		queryBt.setMargin(new Insets(0,0,0,0));
-		queryBt.setBorderPainted(false);
+		queryStartBt.setMargin(new Insets(0,0,0,0));
+		queryStartBt.setBorderPainted(false);
+		queryStopBt.setMargin(new Insets(0,0,0,0));
+		queryStopBt.setBorderPainted(false);
 		resultArea.setEditable(false);
 		
 		
@@ -61,7 +75,9 @@ public class MainFrame
 		queryBox.add(Box.createHorizontalStrut(10));
 		queryBox.add(new JScrollPane(queryArea));
 		queryBox.add(Box.createHorizontalGlue());
-		queryBox.add(queryBt);
+		queryBox.add(queryStartBt);
+		queryBox.add(Box.createHorizontalGlue());
+		queryBox.add(queryStopBt);
 		queryBox.add(Box.createHorizontalGlue());
 		queryBox.add(Box.createHorizontalStrut(10));
 		queryBox.setBorder(new TitledBorder("Query"));
@@ -92,10 +108,91 @@ public class MainFrame
 		mainFrame.setVisible(true);
 	}
 	
+	private void addListener()
+	{
+		this.queryStartBt.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent arg0) 
+			{
+				String timeStr = sdf.format(new Date());
+				String query = queryArea.getText();
+				query = query.replaceAll("\n", " ").trim();
+				if(query.length() == 0)
+				{
+					resultArea.append(timeStr + "Empty Query, No Result Returned\n");
+					queryStartBt.setEnabled(true);
+					return;
+				}
+				//////////
+				resultArea.append(timeStr + query + "\n");
+				queryThread = new Thread(self, "Query");
+				queryThread.start();
+			}
+			
+		});
+		
+		this.queryStopBt.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent arg0) 
+			{
+				String timeStr = sdf.format(new Date());
+				if(queryThread != null)
+				{
+					if(queryThread.isAlive())
+					{	
+						queryThread.interrupt();
+						//resultArea.append(timeStr + "Query Stopped\n");
+						//queryStartBt.setEnabled(true);
+					}
+					//queryThread = null;
+				}
+			}
+			
+		});
+	}
+	
+	public void run()
+	{
+		queryStartBt.setEnabled(false);
+		temp q = new temp();
+		q.start();
+		String timeStr = sdf.format(new Date());
+		try 
+		{
+			q.join();
+			resultArea.append(timeStr + "result\n");
+		} 
+		catch (InterruptedException e) 
+		{
+			resultArea.append(timeStr + "Query Interupted\n");
+			q.mustStop = true;
+			
+		}
+		queryThread = null;
+		queryStartBt.setEnabled(true);
+		
+		
+	}
+	
 	public static void main(String args[])
 	{
 		MainFrame frame = new MainFrame();
 			
+	}
+	class temp extends Thread
+	{
+		public boolean mustStop = false;
+		public void run()
+		{
+			for(int i = 0; i < 100000000; i++)
+			{	if(mustStop)
+					return;
+				System.out.println(i);
+			}
+		}
+		
 	}
 }
 
