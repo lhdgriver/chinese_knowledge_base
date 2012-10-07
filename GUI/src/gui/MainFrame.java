@@ -28,6 +28,7 @@ import javax.swing.border.TitledBorder;
 
 
 import components.CKBButton;
+import components.CKBLogger;
 
 /**
  * @date 2012-7-12
@@ -44,9 +45,10 @@ public class MainFrame implements Runnable
 	private JButton queryStopBt = new JButton(new ImageIcon("material/stop.png", "Stop"));
 	//private CKBButton queryBt = new CKBButton("material/search-icon.png");
 	private JTextArea resultArea = new JTextArea(20,60);
+	private CKBLogger logger = new CKBLogger(5,60); 
 	
+	//listening thread: in this thread, a new query thread is created and this thread listens to it
 	private Thread queryThread = null;
-	private SimpleDateFormat sdf = new SimpleDateFormat(" [yyyy-MM-dd HH:mm:ss]  ",Locale.SIMPLIFIED_CHINESE);
 	private MainFrame self = this;
 	
 	public MainFrame()
@@ -69,6 +71,7 @@ public class MainFrame implements Runnable
 		queryStopBt.setMargin(new Insets(0,0,0,0));
 		queryStopBt.setBorderPainted(false);
 		resultArea.setEditable(false);
+		logger.setEditable(false);
 		
 		
 		Box queryBox = Box.createHorizontalBox();
@@ -86,11 +89,18 @@ public class MainFrame implements Runnable
 		resultBox.add(new JScrollPane(resultArea));
 		resultBox.add(Box.createHorizontalStrut(10));
 		resultBox.setBorder(new TitledBorder("Result"));
+		Box logBox = Box.createHorizontalBox();
+		logBox.add(Box.createHorizontalStrut(10));
+		logBox.add(new JScrollPane(logger));
+		logBox.add(Box.createHorizontalStrut(10));
+		logBox.setBorder(new TitledBorder("Log"));
 		Box frameBox = Box.createVerticalBox();
 		frameBox.add(Box.createVerticalStrut(6));
 		frameBox.add(queryBox);
 		frameBox.add(Box.createVerticalStrut(8));
 		frameBox.add(resultBox);
+		frameBox.add(Box.createVerticalStrut(8));
+		frameBox.add(logBox);
 		frameBox.add(Box.createVerticalStrut(6));
 		
 		
@@ -115,17 +125,16 @@ public class MainFrame implements Runnable
 			@Override
 			public void actionPerformed(ActionEvent arg0) 
 			{
-				String timeStr = sdf.format(new Date());
 				String query = queryArea.getText();
 				query = query.replaceAll("\n", " ").trim();
 				if(query.length() == 0)
 				{
-					resultArea.append(timeStr + "Empty Query, No Result Returned\n");
+					logger.log("Empty Query, No Result Returned");
 					queryStartBt.setEnabled(true);
 					return;
 				}
 				//////////
-				resultArea.append(timeStr + query + "\n");
+				logger.log(query);
 				queryThread = new Thread(self, "Query");
 				queryThread.start();
 			}
@@ -137,16 +146,12 @@ public class MainFrame implements Runnable
 			@Override
 			public void actionPerformed(ActionEvent arg0) 
 			{
-				String timeStr = sdf.format(new Date());
 				if(queryThread != null)
 				{
 					if(queryThread.isAlive())
 					{	
 						queryThread.interrupt();
-						//resultArea.append(timeStr + "Query Stopped\n");
-						//queryStartBt.setEnabled(true);
 					}
-					//queryThread = null;
 				}
 			}
 			
@@ -158,15 +163,14 @@ public class MainFrame implements Runnable
 		queryStartBt.setEnabled(false);
 		temp q = new temp();
 		q.start();
-		String timeStr = sdf.format(new Date());
 		try 
 		{
 			q.join();
-			resultArea.append(timeStr + "result\n");
+			logger.log("result");
 		} 
 		catch (InterruptedException e) 
 		{
-			resultArea.append(timeStr + "Query Interupted\n");
+			logger.log("Query Interupted");
 			q.mustStop = true;
 			
 		}
