@@ -19,7 +19,7 @@ import java.util.Set;
  * @author lsl
  * @description 
  */
-public class TopKSummaryGraphSearch implements AbstractSearch
+public class TopKSummaryGraphSearch implements AbstractSearcher
 {
     private static AbstractDBHandler  DBHandler = null;
     private String query = null;
@@ -42,7 +42,8 @@ public class TopKSummaryGraphSearch implements AbstractSearch
     	}
     }
     
-    private void setQuery(String query)
+    @Override
+    public void setQuery(String query)
     {
         this.query = query;
         parseQuery();
@@ -96,6 +97,12 @@ public class TopKSummaryGraphSearch implements AbstractSearch
         */
         return new KBGraph();
     }
+
+	@Override
+	public void clearAndStop() {
+		// TODO Auto-generated method stub
+		
+	}
     
     
 }

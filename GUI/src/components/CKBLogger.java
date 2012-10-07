@@ -6,23 +6,25 @@ import java.util.Locale;
 
 import javax.swing.JTextArea;
 
-public class CKBLogger extends JTextArea
+public class CKBLogger
 {
-	private SimpleDateFormat sdf = new SimpleDateFormat(" [yyyy-MM-dd HH:mm:ss]  ",Locale.SIMPLIFIED_CHINESE);
+	private static SimpleDateFormat sdf = new SimpleDateFormat(" [yyyy-MM-dd HH:mm:ss]  ",Locale.SIMPLIFIED_CHINESE);
+	private static JTextArea instance = null;
 	
-	public CKBLogger(int a, int b)
+	public static void setTextArea(JTextArea ta)
 	{
-		super(a,b);
+		instance = ta;
 	}
-	
-	public void log(String l)
+
+	public static void log(String l)
 	{
 		String timeStr = sdf.format(new Date());
-		this.append(timeStr + "  " + l + "\n");
+		instance.append(timeStr + "  " + l + "\n");
+		instance.selectAll();
 	}
 	
-	public void clear()
+	public static void clear()
 	{
-		this.setText("");
+		instance.setText("");
 	}
 }

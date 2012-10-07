@@ -36,7 +36,7 @@ import components.CKBLogger;
  * @description main frame of this program , mainly get query and present results 
  */
 
-public class MainFrame implements Runnable
+public class MainFrame
 {
 	private static String frameTitle = "中文知识库查询测试";
 	private JFrame mainFrame = new JFrame(frameTitle);
@@ -45,7 +45,7 @@ public class MainFrame implements Runnable
 	private JButton queryStopBt = new JButton(new ImageIcon("material/stop.png", "Stop"));
 	//private CKBButton queryBt = new CKBButton("material/search-icon.png");
 	private JTextArea resultArea = new JTextArea(20,60);
-	private CKBLogger logger = new CKBLogger(5,60); 
+	public JTextArea logger = new JTextArea(6, 60); 
 	
 	//listening thread: in this thread, a new query thread is created and this thread listens to it
 	private Thread queryThread = null;
@@ -55,6 +55,12 @@ public class MainFrame implements Runnable
 	{
 		initialize();
 		addListener();
+	}
+	
+	public void setQueryButtonEnabled(boolean start, boolean stop)
+	{
+		this.queryStartBt.setEnabled(start);
+		this.queryStopBt.setEnabled(stop);
 	}
 	
 	private void initialize()
@@ -72,7 +78,7 @@ public class MainFrame implements Runnable
 		queryStopBt.setBorderPainted(false);
 		resultArea.setEditable(false);
 		logger.setEditable(false);
-		
+		CKBLogger.setTextArea(logger);
 		
 		Box queryBox = Box.createHorizontalBox();
 		queryBox.add(Box.createHorizontalStrut(10));
@@ -129,13 +135,14 @@ public class MainFrame implements Runnable
 				query = query.replaceAll("\n", " ").trim();
 				if(query.length() == 0)
 				{
-					logger.log("Empty Query, No Result Returned");
+					CKBLogger.log("Empty Query, No Result Returned");
 					queryStartBt.setEnabled(true);
 					return;
 				}
 				//////////
-				logger.log(query);
-				queryThread = new Thread(self, "Query");
+				CKBLogger.log(query);
+				queryThread = new QueryDaemon(self);
+				((QueryDaemon) queryThread).setQuery(query);
 				queryThread.start();
 			}
 			
@@ -158,46 +165,12 @@ public class MainFrame implements Runnable
 		});
 	}
 	
-	public void run()
-	{
-		queryStartBt.setEnabled(false);
-		temp q = new temp();
-		q.start();
-		try 
-		{
-			q.join();
-			logger.log("result");
-		} 
-		catch (InterruptedException e) 
-		{
-			logger.log("Query Interupted");
-			q.mustStop = true;
-			
-		}
-		queryThread = null;
-		queryStartBt.setEnabled(true);
-		
-		
-	}
 	
 	public static void main(String args[])
 	{
 		MainFrame frame = new MainFrame();
 			
 	}
-	class temp extends Thread
-	{
-		public boolean mustStop = false;
-		public void run()
-		{
-			for(int i = 0; i < 100000000; i++)
-			{	if(mustStop)
-					return;
-				System.out.println(i);
-			}
-		}
-		
-	}
-}
 
+}
 
