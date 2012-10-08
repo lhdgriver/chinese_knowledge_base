@@ -88,7 +88,39 @@ public class Naive2CliqueSearcher implements AbstractSearcher, Runnable
 
 	private boolean isValid(ArrayList<Integer> result) 
 	{
-		return false;
+		HashSet<Integer> resultSet = new HashSet<Integer>();
+		HashSet<Integer> neighbours = new HashSet<Integer>();
+		for(Integer id: result)
+			resultSet.add(id);
+		for(Integer id: resultSet)
+		{	
+			for(Integer ne : entityNeighboursDic.get(id))
+					neighbours.add(ne);
+			resultSet.remove(id);
+		}
+		while(resultSet.size() > 0)
+		{
+			boolean isConnected = false;
+			for(Integer id: resultSet)
+			{
+				for(Integer ne : entityNeighboursDic.get(id))
+					if(neighbours.contains(ne))
+					{
+						isConnected = true;
+						break;
+					}
+				if(isConnected)
+				{
+					resultSet.remove(id);
+					for(Integer ne : entityNeighboursDic.get(id))
+						neighbours.add(ne);
+					break;
+				}
+			}
+			if(!isConnected)
+				return false;
+		}
+		return true;
 	}
 
 	@Override
