@@ -34,7 +34,7 @@ public class IdIndexStore
 		conn = java.sql.DriverManager.getConnection(connectionString, userName, passWord);
 	}
 	
-	public HashMap<Integer, String> getNameByIdSet(ArrayList<Integer> ids)
+	public HashMap<Integer, String> getURIByIdSet(ArrayList<Integer> ids)
 	{
 		HashMap<Integer, String> idNameDic = new HashMap<Integer, String>();
 		StringBuffer query = new StringBuffer("Select id, URI from entity_index where id in (");
@@ -62,4 +62,31 @@ public class IdIndexStore
 		return idNameDic; 
 	}
 	
+	public HashMap<Integer, String> getPerprotyByIdSet(ArrayList<Integer> ids)
+	{
+		HashMap<Integer, String> idNameDic = new HashMap<Integer, String>();
+		StringBuffer query = new StringBuffer("Select id, property from property_index where id in (");
+		for(Integer id : ids)
+			query.append(id).append(",");
+		query.setCharAt(query.length() - 1 , ')');
+		query.append(";");
+		java.sql.Statement stmt;
+		try 
+		{
+			stmt = conn.createStatement();
+			java.sql.ResultSet rs = stmt.executeQuery(query.toString());
+			while(rs.next()) 
+			{
+				Integer id = rs.getInt(1);
+				String property = rs.getString(2);
+				idNameDic.put(id, property);
+			}	
+		} 
+		catch (Exception e) 
+		{
+			CKBLogger.log(e.getMessage());
+		}
+		
+		return idNameDic; 
+	}
 }
