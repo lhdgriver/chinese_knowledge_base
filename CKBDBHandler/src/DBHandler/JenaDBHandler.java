@@ -30,7 +30,7 @@ import com.mysql.jdbc.Statement;
  * @date 2012-7-12
  * @author lsl
  * @description 
- * Ê¹ÓÃÇ°µÃÏÈÔÚMySQLÖĞ½¨Á¢ÏàÓ¦µÄÊı¾İ¿â(Í¨¹ıSDBµÄÃüÁîĞĞ£¬²¢ÇÒÊÖ¶¯Ìí¼Óword_sentence±í)
+ * ä½¿ç”¨å‰å¾—å…ˆåœ¨MySQLä¸­å»ºç«‹ç›¸åº”çš„æ•°æ®åº“(é€šè¿‡SDBçš„å‘½ä»¤è¡Œï¼Œå¹¶ä¸”æ‰‹åŠ¨æ·»åŠ dblp_index.word_entity_idè¡¨)
  */
 public class JenaDBHandler implements AbstractDBHandler
 {
@@ -39,16 +39,16 @@ public class JenaDBHandler implements AbstractDBHandler
 	private Dataset ds = null;
 	private Connection conn = null;
 	private ArrayList<String> word_arr = new ArrayList<String>();
-	private ArrayList<String> sentence_arr = new ArrayList<String>();
+	private ArrayList<Integer> entity_id_arr = new ArrayList<Integer>();
 
 	public JenaDBHandler() throws Exception
 	{
-		//ĞèÒª½«sdb.ttl·ÅÔÚCKBDBHandlerÎÄ¼ş¼ĞÏÂ£¬ÀïÃæÓĞMySQLµÄÕËºÅÃÜÂëÉèÖÃ
+		//éœ€è¦å°†sdb.ttlæ”¾åœ¨CKBDBHandleræ–‡ä»¶å¤¹ä¸‹ï¼Œé‡Œé¢æœ‰MySQLçš„è´¦å·å¯†ç è®¾ç½®
 		store = StoreFactory.create("sdb.ttl");
 		ds = DatasetStore.create(store);
 		model = ModelFactory.createDefaultModel();
 		Class.forName("com.mysql.jdbc.Driver");
-		//¸ÄMySQLÊı¾İ¿âÃû×ÖºÍÕËºÅÃÜÂë
+		//æ”¹MySQLæ•°æ®åº“åå­—å’Œè´¦å·å¯†ç 
 		conn = (Connection) DriverManager
 				.getConnection("jdbc:mysql://localhost/jena_sdb?"
 						+ "user=root&password=890911");
@@ -95,32 +95,34 @@ public class JenaDBHandler implements AbstractDBHandler
 
 	//for 'o' starts with "@", it is a literal
 	//otherwise, it is a resource
-    //Í¬Ê±½¨Á¢µ¹ÅÅ±íword_sentence
+    //åŒæ—¶å»ºç«‹å€’æ’è¡¨dblp_index.word_entity_id
     public boolean insert(String _s, String _p, String _o) throws Exception
     {
-    	Resource s = model.createResource(_s);
-    	Property p = model.createProperty(_p);
+    	Resource s = model.getResource(_s);
+    	Property p = model.getProperty(_p);
     	if (_o.startsWith("@")) {
-    		//literal ĞèÒª±»·Ö¸îÎªµ¥´Ê£¬È»ºó×ª»¯ÎªĞ¡Ğ´£¬È»ºó´æÈëµ¹ÅÅ±í£¬×îºóÔÙ¼ÓÈëmodelÖĞ
+    		//literal éœ€è¦è¢«åˆ†å‰²ä¸ºå•è¯ï¼Œç„¶åè½¬åŒ–ä¸ºå°å†™ï¼Œç„¶åå­˜å…¥å€’æ’è¡¨ï¼Œæœ€åå†åŠ å…¥modelä¸­
     		String o = _o.substring(1);
-    		String sql_o = o.replace("\"", "\\\"");
-    		//Í¨¹ı¿Õ¸ñ·Ö¸î£¬ÒÔºóÓĞĞèÇóÔÙĞ´¸ü¸´ÔÓµÄÕıÔò±í´ïÊ½
+    		o = o.replace("\\", "\\\\");
+    		String sql_o = o.replace("\"", "\\\"").replace("\'", "\\\'");
+    		int entity_id = Integer.valueOf(_s);
+    		//é€šè¿‡ç©ºæ ¼åˆ†å‰²ï¼Œä»¥åæœ‰éœ€æ±‚å†å†™æ›´å¤æ‚çš„æ­£åˆ™è¡¨è¾¾å¼
     		String[] words = sql_o.split("\\s+");
     		for (int i = 0; i < words.length; i++) {
     			word_arr.add(words[i]);
-    			sentence_arr.add(sql_o);
+    			entity_id_arr.add(entity_id);
     		}
-    		if (word_arr.size() >= 10000) {
+    		if (word_arr.size() >= 5000) {
     			Statement stmt = (Statement) conn.createStatement();
     			StringBuffer temp_query = new StringBuffer();
-    			temp_query.append("insert into word_sentence (word, sentence) values ");
+    			temp_query.append("insert into dblp_index.word_entity_id (word, entity_id) values ");
     			for (int i = 0; i < word_arr.size(); i++) {
-    				temp_query.append("(\""+word_arr.get(i) + "\",\"" + sentence_arr.get(i) +"\"),");
+    				temp_query.append("(\""+word_arr.get(i) + "\",\"" + entity_id_arr.get(i) +"\"),");
     			}
     			String query = temp_query.substring(0, temp_query.length() - 1);
     			stmt.execute(query);
     			word_arr.clear();
-    			sentence_arr.clear();
+    			entity_id_arr.clear();
     		}
     		s.addProperty(p, model.createLiteral(o));
     	}
@@ -169,18 +171,23 @@ public class JenaDBHandler implements AbstractDBHandler
 		return ret;
 	}
 
-	//Í¨¹ıliteralÀ´µÃµ½¶ÔÓ¦µÄresource£¬×¢ÒâµÄÊÇliteralµÃÔÚµ¹ÅÅ±íword_sentenceÀïÕÒµ½ËüËù¶ÔÓ¦µÄËùÓĞsentence
+	//å†è®®
+	//é€šè¿‡literalæ¥å¾—åˆ°å¯¹åº”çš„resourceï¼Œæ³¨æ„çš„æ˜¯literalå¾—åœ¨å€’æ’è¡¨dblp_index.word_entity_idé‡Œæ‰¾åˆ°å®ƒæ‰€å¯¹åº”çš„æ‰€æœ‰entity_id
 	public List<Resource> getResourcebyLiteral(String _literal) throws Exception {
+		model = ds.getDefaultModel();
+		Resource r = null;
 		List<Resource> ret = new ArrayList<Resource>();
 		Statement query_stmt = (Statement) conn.createStatement();
-		ResultSet rs = query_stmt.executeQuery("select sentence from word_sentence where word = " + _literal.toLowerCase());
+		ResultSet rs = query_stmt.executeQuery("select entity_id from dblp_index.word_entity_id where word = \"" + _literal.toLowerCase()+"\"");
 		while(rs.next()) {
-			Literal literal = model.createLiteral(rs.getString(1));
-			StmtIterator iter = model.listStatements(null, null, literal);
-			while(iter.hasNext()) {
-				com.hp.hpl.jena.rdf.model.Statement stmt =  iter.nextStatement();
-				ret.add(stmt.getSubject());
-			}
+			System.out.println(rs.getString(1));
+			r = model.getResource(rs.getString(1));
+			ret.add(r);
+			
+			
+			getDistOne(r);
+			
+			
 		}
 		return ret;
 	}
@@ -191,14 +198,14 @@ public class JenaDBHandler implements AbstractDBHandler
 		{	
 			Statement stmt = (Statement) conn.createStatement();
 			StringBuffer temp_query = new StringBuffer();
-			temp_query.append("insert into word_sentence (word, sentence) values ");
+			temp_query.append("insert into dblp_index.word_entity_id (word, entity_id) values ");
 			for (int i = 0; i < word_arr.size(); i++) {
-				temp_query.append("(\""+word_arr.get(i) + "\",\"" + sentence_arr.get(i) +"\"),");
+				temp_query.append("(\""+word_arr.get(i) + "\",\"" + entity_id_arr.get(i) +"\"),");
 			}
 			String query = temp_query.substring(0, temp_query.length() - 1);
 			stmt.execute(query);
 		}
-		
+		word_arr.clear();
 		//close MySQL connection
 		conn.close();
 		//store model to MySQL
@@ -207,6 +214,31 @@ public class JenaDBHandler implements AbstractDBHandler
 		store.getConnection().close();
 		store.close();
 		return true;
+	}
+
+	@Override
+	public List<com.hp.hpl.jena.rdf.model.Statement> getDistOne(Resource r) throws Exception {		
+		
+		model = ds.getDefaultModel();
+		List<com.hp.hpl.jena.rdf.model.Statement> ret = new ArrayList<com.hp.hpl.jena.rdf.model.Statement>();
+		
+		//åˆ—å„¿å­
+		StmtIterator iter = r.listProperties();
+		com.hp.hpl.jena.rdf.model.Statement stmt = null;
+		while(iter.hasNext()) {
+			stmt = iter.nextStatement();
+			System.out.println(stmt.getObject().toString());
+			ret.add(stmt);
+		}
+		//æ‰¾çˆ¶äº²
+		iter = model.listStatements(null, null, r);
+		while(iter.hasNext()) {
+			stmt = iter.nextStatement();
+			System.out.println(stmt.getSubject().toString());
+			ret.add(stmt);
+		}
+		
+		return null;
 	}
 
 }
