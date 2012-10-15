@@ -28,9 +28,8 @@ import com.mysql.jdbc.Statement;
 
 /**
  * @date 2012-7-12
- * @author lsl
+ * @author lh
  * @description 
- * 使用前得先在MySQL中建立相应的数据库(通过SDB的命令行，并且手动添加dblp_index.word_entity_id表)
  */
 public class JenaDBHandler implements AbstractDBHandler
 {
@@ -40,18 +39,16 @@ public class JenaDBHandler implements AbstractDBHandler
 	private Connection conn = null;
 	private ArrayList<String> word_arr = new ArrayList<String>();
 	private ArrayList<Integer> entity_id_arr = new ArrayList<Integer>();
-
+	
 	public JenaDBHandler() throws Exception
 	{
-		//需要将sdb.ttl放在CKBDBHandler文件夹下，里面有MySQL的账号密码设置
 		store = StoreFactory.create("sdb.ttl");
 		ds = DatasetStore.create(store);
 		model = ModelFactory.createDefaultModel();
 		Class.forName("com.mysql.jdbc.Driver");
-		//改MySQL数据库名字和账号密码
 		conn = (Connection) DriverManager
-				.getConnection("jdbc:mysql://localhost/jena_sdb?"
-						+ "user=root&password=890911");
+				.getConnection("jdbc:mysql://162.105.71.12/new_sdb?"
+						+ "user=root&password=123456");
 	}
 
 	public com.hp.hpl.jena.query.ResultSet execSelect(String query) {
@@ -95,18 +92,16 @@ public class JenaDBHandler implements AbstractDBHandler
 
 	//for 'o' starts with "@", it is a literal
 	//otherwise, it is a resource
-    //同时建立倒排表dblp_index.word_entity_id
+    
     public boolean insert(String _s, String _p, String _o) throws Exception
     {
     	Resource s = model.getResource(_s);
     	Property p = model.getProperty(_p);
     	if (_o.startsWith("@")) {
-    		//literal 需要被分割为单词，然后转化为小写，然后存入倒排表，最后再加入model中
     		String o = _o.substring(1);
     		o = o.replace("\\", "\\\\");
     		String sql_o = o.replace("\"", "\\\"").replace("\'", "\\\'");
     		int entity_id = Integer.valueOf(_s);
-    		//通过空格分割，以后有需求再写更复杂的正则表达式
     		String[] words = sql_o.split("\\s+");
     		for (int i = 0; i < words.length; i++) {
     			word_arr.add(words[i]);
@@ -171,21 +166,19 @@ public class JenaDBHandler implements AbstractDBHandler
 		return ret;
 	}
 
-	//再议
-	//通过literal来得到对应的resource，注意的是literal得在倒排表dblp_index.word_entity_id里找到它所对应的所有entity_id
 	public List<Resource> getResourcebyLiteral(String _literal) throws Exception {
 		model = ds.getDefaultModel();
 		Resource r = null;
 		List<Resource> ret = new ArrayList<Resource>();
 		Statement query_stmt = (Statement) conn.createStatement();
-		ResultSet rs = query_stmt.executeQuery("select entity_id from dblp_index.word_entity_id where word = \"" + _literal.toLowerCase()+"\"");
+		ResultSet rs = query_stmt.executeQuery("select distinct(entity_id) from dblp_index.word_entity_id where word = \"" + _literal.toLowerCase()+"\"");
 		while(rs.next()) {
 			System.out.println(rs.getString(1));
 			r = model.getResource(rs.getString(1));
 			ret.add(r);
 			
 			
-			getDistOne(r);
+			//getDistOne(r);
 			
 			
 		}
@@ -222,7 +215,6 @@ public class JenaDBHandler implements AbstractDBHandler
 		model = ds.getDefaultModel();
 		List<com.hp.hpl.jena.rdf.model.Statement> ret = new ArrayList<com.hp.hpl.jena.rdf.model.Statement>();
 		
-		//列儿子
 		StmtIterator iter = r.listProperties();
 		com.hp.hpl.jena.rdf.model.Statement stmt = null;
 		while(iter.hasNext()) {
@@ -230,7 +222,6 @@ public class JenaDBHandler implements AbstractDBHandler
 			System.out.println(stmt.getObject().toString());
 			ret.add(stmt);
 		}
-		//找父亲
 		iter = model.listStatements(null, null, r);
 		while(iter.hasNext()) {
 			stmt = iter.nextStatement();
@@ -238,7 +229,36 @@ public class JenaDBHandler implements AbstractDBHandler
 			ret.add(stmt);
 		}
 		
-		return null;
+		return ret;
+	}
+	
+	public List<com.hp.hpl.jena.rdf.model.Statement> getDistOne(String  r) throws Exception 
+	{		
+		return getDistOne(model.createResource(r));
+	}
+
+	
+	public List<Resource> getDistOneResources(Resource r) throws Exception {		
+		
+		model = ds.getDefaultModel();
+		List<Resource> ret = new ArrayList<Resource>();
+		
+		StmtIterator iter = r.listProperties();
+		com.hp.hpl.jena.rdf.model.Statement stmt = null;
+		while(iter.hasNext()) {
+			stmt = iter.nextStatement();
+			System.out.println(stmt.getObject().toString());
+			if(stmt.getObject().isResource())
+				ret.add(stmt.getObject().asResource());
+		}
+		iter = model.listStatements(null, null, r);
+		while(iter.hasNext()) {
+			stmt = iter.nextStatement();
+			System.out.println(stmt.getSubject().toString());
+			ret.add(stmt.getSubject().asResource());
+		}
+		
+		return ret;
 	}
 
 }

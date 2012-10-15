@@ -3,9 +3,9 @@ package id;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import com.sun.org.apache.bcel.internal.generic.Select;
-import components.CKBLogger;
 
 public class IdIndexStore 
 {
@@ -23,7 +23,7 @@ public class IdIndexStore
 		} 
 		catch (Exception e) 
 		{
-			CKBLogger.log(e.getMessage());
+			e.printStackTrace();
 		}
 	}
 	
@@ -34,10 +34,10 @@ public class IdIndexStore
 		conn = java.sql.DriverManager.getConnection(connectionString, userName, passWord);
 	}
 	
-	public HashMap<Integer, String> getURIByIdSet(ArrayList<Integer> ids)
+	public HashMap<Integer, String> getURIByIdSet(HashSet<Integer> ids)
 	{
 		HashMap<Integer, String> idNameDic = new HashMap<Integer, String>();
-		StringBuffer query = new StringBuffer("Select id, URI from entity_index where id in (");
+		StringBuffer query = new StringBuffer("Select id, URI from entity_id where id in (");
 		for(Integer id : ids)
 			query.append(id).append(",");
 		query.setCharAt(query.length() - 1 , ')');
@@ -56,16 +56,16 @@ public class IdIndexStore
 		} 
 		catch (Exception e) 
 		{
-			CKBLogger.log(e.getMessage());
+			e.printStackTrace();
 		}
 		
 		return idNameDic; 
 	}
 	
-	public HashMap<Integer, String> getPerprotyByIdSet(ArrayList<Integer> ids)
+	public HashMap<Integer, String> getPerprotyByIdSet(HashSet<Integer> ids)
 	{
 		HashMap<Integer, String> idNameDic = new HashMap<Integer, String>();
-		StringBuffer query = new StringBuffer("Select id, property from property_index where id in (");
+		StringBuffer query = new StringBuffer("Select id, property from property_id where id in (");
 		for(Integer id : ids)
 			query.append(id).append(",");
 		query.setCharAt(query.length() - 1 , ')');
@@ -84,7 +84,7 @@ public class IdIndexStore
 		} 
 		catch (Exception e) 
 		{
-			CKBLogger.log(e.getMessage());
+			e.printStackTrace();
 		}
 		
 		return idNameDic; 

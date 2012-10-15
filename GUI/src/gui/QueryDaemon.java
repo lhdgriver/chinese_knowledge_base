@@ -8,7 +8,7 @@ public class QueryDaemon extends Thread
 	private MainFrame frame = null;
 	private CKBLogger logger = null;
 	private String query = null;
-	
+
 	public boolean startButtonEnable = true;
 	public boolean stopButtonEnable = false;
 	
@@ -43,7 +43,8 @@ public class QueryDaemon extends Thread
 		try 
 		{
 			q.join();
-			CKBLogger.log("result");
+			CKBLogger.log("Search Process Finish");
+			frame.setNewResult(queryThread.result);
 		} 
 		catch (InterruptedException e) 
 		{

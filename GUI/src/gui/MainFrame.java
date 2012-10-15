@@ -29,6 +29,7 @@ import javax.swing.border.TitledBorder;
 
 import components.CKBButton;
 import components.CKBLogger;
+import components.CKBTextPane;
 
 /**
  * @date 2012-7-12
@@ -44,7 +45,7 @@ public class MainFrame
 	private JButton queryStartBt = new JButton(new ImageIcon("material/start.png", "Query"));
 	private JButton queryStopBt = new JButton(new ImageIcon("material/stop.png", "Stop"));
 	//private CKBButton queryBt = new CKBButton("material/search-icon.png");
-	private JTextArea resultArea = new JTextArea(20,60);
+	private CKBTextPane resultArea = new CKBTextPane(60,400);
 	public JTextArea logger = new JTextArea(6, 60); 
 	
 	//listening thread: in this thread, a new query thread is created and this thread listens to it
@@ -142,6 +143,7 @@ public class MainFrame
 				//////////
 				CKBLogger.log(query);
 				queryThread = new QueryDaemon(self);
+				resultArea.setQuery(query);
 				((QueryDaemon) queryThread).setQuery(query);
 				queryThread.start();
 			}
@@ -165,6 +167,11 @@ public class MainFrame
 		});
 	}
 	
+	public void setNewResult(String result)
+	{
+		this.resultArea.setText(result);
+		resultArea.syntaxParse();
+	}
 	
 	public static void main(String args[])
 	{

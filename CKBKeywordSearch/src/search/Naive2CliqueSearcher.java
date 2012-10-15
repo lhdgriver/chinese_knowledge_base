@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import result.NormalResult;
+
 import DBHandler.AbstractDBHandler;
 import DBHandler.JenaDBHandler;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Statement;
 import com.sun.xml.internal.bind.v2.schemagen.xmlschema.List;
 
 public class Naive2CliqueSearcher implements AbstractSearcher, Runnable 
@@ -18,6 +21,9 @@ public class Naive2CliqueSearcher implements AbstractSearcher, Runnable
 	private HashMap<String, HashSet<Integer>> keywordEntitiesDic = new HashMap();
 	private HashMap<Integer, HashSet<Integer>> entityNeighboursDic= new HashMap();
 	private boolean mustStop = false;
+	public String result = null;
+	
+	private static HashSet<Integer> typeId = new HashSet<Integer>();
 	
 	static
 	{
@@ -27,6 +33,9 @@ public class Naive2CliqueSearcher implements AbstractSearcher, Runnable
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		typeId.add(338387);
+		typeId.add(439086);
+		typeId.add(993989);
 	}
 	
 	@Override
@@ -48,21 +57,38 @@ public class Naive2CliqueSearcher implements AbstractSearcher, Runnable
 			if(keywordEntitiesDic.containsKey(keyword))
 				continue;
 			keywordEntitiesDic.put(keyword, new HashSet<Integer>());
-			//for(Resource resource : dbHandler.getResourcebyLiteral(keyword))
-			{
-				//Integer id = Integer.parseInt(resource.getLocalName()); 
-				//keywordEntitiesDic.get(keyword).add(id);
-				//if(entityNeighboursDic.containsKey(id)) 
-				//	continue;
-				//entityNeighboursDic.put(id, new HashSet<Integer>());
-				//for(Resource neighbour : dbHandler.getNeighbours(resource))
-					//entityNeighboursDic.get(id).add(Integer.parseInt(neighbour.getLocalName()));
+			try {
+				for(Resource resource : dbHandler.getResourcebyLiteral(keyword))
+				{
+					Integer id = Integer.parseInt(resource.toString()); 
+					keywordEntitiesDic.get(keyword).add(id);
+					if(entityNeighboursDic.containsKey(id)) 
+						continue;
+					entityNeighboursDic.put(id, new HashSet<Integer>());
+					entityNeighboursDic.get(id).add(id);
+					for(Resource neighbour : dbHandler.getDistOneResources(resource))
+					{
+						int neighbourID = Integer.parseInt(neighbour.toString());
+						if(!typeId.contains(neighbourID))
+							entityNeighboursDic.get(id).add(neighbourID);
+					}
+				}
+			} catch (NumberFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 		
 		ArrayList<ArrayList<Integer>> resultList = new ArrayList<ArrayList<Integer>>();
 		ArrayList<Integer> result = new ArrayList<Integer>();
 		getResult(0, result, resultList);
+		//System.out.print(resultList.size());
+		NormalResult ret = new NormalResult();
+		ret.format(resultList, dbHandler);
+		this.result = ret.toString();
 	}
 
 	private void getResult(int i, ArrayList<Integer> result, ArrayList<ArrayList<Integer>> resultList) 
@@ -73,7 +99,7 @@ public class Naive2CliqueSearcher implements AbstractSearcher, Runnable
 			{
 				ArrayList<Integer> newResult = new ArrayList<Integer>();
 				for(Integer integer : result)
-					newResult.add(i);
+					newResult.add(integer);
 				resultList.add(newResult);
 			}
 			return;
@@ -97,6 +123,7 @@ public class Naive2CliqueSearcher implements AbstractSearcher, Runnable
 			for(Integer ne : entityNeighboursDic.get(id))
 					neighbours.add(ne);
 			resultSet.remove(id);
+			break;
 		}
 		while(resultSet.size() > 0)
 		{

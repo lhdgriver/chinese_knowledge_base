@@ -14,5 +14,5 @@ for line in file(data_folder + 'dblp.rdf'):
 print len(entities)
 sw = open('dblp_entities.txt', 'w')
 for entity in entities:
-    sw.write(entity + '\n')
+    sw.write(entity.strip() + '\n')
 sw.close()

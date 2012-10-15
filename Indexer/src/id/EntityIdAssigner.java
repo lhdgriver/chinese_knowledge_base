@@ -131,8 +131,8 @@ public class EntityIdAssigner
 			if(++nn % 100000 == 0) 
 				System.out.print(nn + "\r");
 			String tks[] = line.split("\t");
-			String s = entityIdMap.containsKey(tks[0])? entityIdMap.get(tks[0]).toString(): tks[0];
-			String o = entityIdMap.containsKey(tks[2])? entityIdMap.get(tks[2]).toString(): tks[2];
+			String s = entityIdMap.containsKey(tks[0].trim())? entityIdMap.get(tks[0].trim()).toString(): tks[0];
+			String o = entityIdMap.containsKey(tks[2].trim())? entityIdMap.get(tks[2].trim()).toString(): tks[2];
 			lfw.write(s+ "\t" + tks[1] + "\t" + o + "\n");
 		}
 		fr.close();
@@ -148,7 +148,7 @@ public class EntityIdAssigner
 			this.getConnection();
 			this.getMaxId();
 			this.deDuplicate();
-			this.insert(); 
+			this.insert();  
 			replaceURIByID();
 			fw.close();
 		} 
