@@ -30,7 +30,7 @@ import com.mysql.jdbc.Statement;
  * @date 2012-7-12
  * @author lsl
  * @description 
- * 使用前得先在MySQL中建立相应的数据库(通过SDB的命令行，并且手动添加word_sentence表)
+ * 使用前得先在MySQL中建立相应的数据库(通过SDB的命令行，并且手动添加dblp_index.word_entity_id表)
  */
 public class JenaDBHandler implements AbstractDBHandler
 {
@@ -39,7 +39,7 @@ public class JenaDBHandler implements AbstractDBHandler
 	private Dataset ds = null;
 	private Connection conn = null;
 	private ArrayList<String> word_arr = new ArrayList<String>();
-	private ArrayList<String> sentence_arr = new ArrayList<String>();
+	private ArrayList<Integer> entity_id_arr = new ArrayList<Integer>();
 
 	public JenaDBHandler() throws Exception
 	{
@@ -95,32 +95,34 @@ public class JenaDBHandler implements AbstractDBHandler
 
 	//for 'o' starts with "@", it is a literal
 	//otherwise, it is a resource
-    //同时建立倒排表word_sentence
+    //同时建立倒排表dblp_index.word_entity_id
     public boolean insert(String _s, String _p, String _o) throws Exception
     {
-    	Resource s = model.createResource(_s);
-    	Property p = model.createProperty(_p);
+    	Resource s = model.getResource(_s);
+    	Property p = model.getProperty(_p);
     	if (_o.startsWith("@")) {
     		//literal 需要被分割为单词，然后转化为小写，然后存入倒排表，最后再加入model中
     		String o = _o.substring(1);
-    		String sql_o = o.replace("\"", "\\\"");
+    		o = o.replace("\\", "\\\\");
+    		String sql_o = o.replace("\"", "\\\"").replace("\'", "\\\'");
+    		int entity_id = Integer.valueOf(_s);
     		//通过空格分割，以后有需求再写更复杂的正则表达式
     		String[] words = sql_o.split("\\s+");
     		for (int i = 0; i < words.length; i++) {
     			word_arr.add(words[i]);
-    			sentence_arr.add(sql_o);
+    			entity_id_arr.add(entity_id);
     		}
-    		if (word_arr.size() >= 10000) {
+    		if (word_arr.size() >= 5000) {
     			Statement stmt = (Statement) conn.createStatement();
     			StringBuffer temp_query = new StringBuffer();
-    			temp_query.append("insert into word_sentence (word, sentence) values ");
+    			temp_query.append("insert into dblp_index.word_entity_id (word, entity_id) values ");
     			for (int i = 0; i < word_arr.size(); i++) {
-    				temp_query.append("(\""+word_arr.get(i) + "\",\"" + sentence_arr.get(i) +"\"),");
+    				temp_query.append("(\""+word_arr.get(i) + "\",\"" + entity_id_arr.get(i) +"\"),");
     			}
     			String query = temp_query.substring(0, temp_query.length() - 1);
     			stmt.execute(query);
     			word_arr.clear();
-    			sentence_arr.clear();
+    			entity_id_arr.clear();
     		}
     		s.addProperty(p, model.createLiteral(o));
     	}
@@ -169,18 +171,23 @@ public class JenaDBHandler implements AbstractDBHandler
 		return ret;
 	}
 
-	//通过literal来得到对应的resource，注意的是literal得在倒排表word_sentence里找到它所对应的所有sentence
+	//再议
+	//通过literal来得到对应的resource，注意的是literal得在倒排表dblp_index.word_entity_id里找到它所对应的所有entity_id
 	public List<Resource> getResourcebyLiteral(String _literal) throws Exception {
+		model = ds.getDefaultModel();
+		Resource r = null;
 		List<Resource> ret = new ArrayList<Resource>();
 		Statement query_stmt = (Statement) conn.createStatement();
-		ResultSet rs = query_stmt.executeQuery("select sentence from word_sentence where word = " + _literal.toLowerCase());
+		ResultSet rs = query_stmt.executeQuery("select entity_id from dblp_index.word_entity_id where word = \"" + _literal.toLowerCase()+"\"");
 		while(rs.next()) {
-			Literal literal = model.createLiteral(rs.getString(1));
-			StmtIterator iter = model.listStatements(null, null, literal);
-			while(iter.hasNext()) {
-				com.hp.hpl.jena.rdf.model.Statement stmt =  iter.nextStatement();
-				ret.add(stmt.getSubject());
-			}
+			System.out.println(rs.getString(1));
+			r = model.getResource(rs.getString(1));
+			ret.add(r);
+			
+			
+			getDistOne(r);
+			
+			
 		}
 		return ret;
 	}
@@ -191,14 +198,14 @@ public class JenaDBHandler implements AbstractDBHandler
 		{	
 			Statement stmt = (Statement) conn.createStatement();
 			StringBuffer temp_query = new StringBuffer();
-			temp_query.append("insert into word_sentence (word, sentence) values ");
+			temp_query.append("insert into dblp_index.word_entity_id (word, entity_id) values ");
 			for (int i = 0; i < word_arr.size(); i++) {
-				temp_query.append("(\""+word_arr.get(i) + "\",\"" + sentence_arr.get(i) +"\"),");
+				temp_query.append("(\""+word_arr.get(i) + "\",\"" + entity_id_arr.get(i) +"\"),");
 			}
 			String query = temp_query.substring(0, temp_query.length() - 1);
 			stmt.execute(query);
 		}
-		
+		word_arr.clear();
 		//close MySQL connection
 		conn.close();
 		//store model to MySQL
@@ -207,6 +214,31 @@ public class JenaDBHandler implements AbstractDBHandler
 		store.getConnection().close();
 		store.close();
 		return true;
+	}
+
+	@Override
+	public List<com.hp.hpl.jena.rdf.model.Statement> getDistOne(Resource r) throws Exception {		
+		
+		model = ds.getDefaultModel();
+		List<com.hp.hpl.jena.rdf.model.Statement> ret = new ArrayList<com.hp.hpl.jena.rdf.model.Statement>();
+		
+		//列儿子
+		StmtIterator iter = r.listProperties();
+		com.hp.hpl.jena.rdf.model.Statement stmt = null;
+		while(iter.hasNext()) {
+			stmt = iter.nextStatement();
+			System.out.println(stmt.getObject().toString());
+			ret.add(stmt);
+		}
+		//找父亲
+		iter = model.listStatements(null, null, r);
+		while(iter.hasNext()) {
+			stmt = iter.nextStatement();
+			System.out.println(stmt.getSubject().toString());
+			ret.add(stmt);
+		}
+		
+		return null;
 	}
 
 }

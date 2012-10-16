@@ -21,11 +21,11 @@ import java.util.Set;
  */
 public class TopKSummaryGraphSearch implements AbstractSearch
 {
-    private static AbstractDBHandler  DBHandler = new JenaDBHandler();
+    private static AbstractDBHandler  DBHandler = new DBHandler();
     private String query = null;
     private List<String> keywords = new ArrayList() ;
     //hash or list ---> tolerant with duplicated keywords
-    private Map<String, List<String>> keyLiterals = new HashMap();
+    private Map<String, List<String>> keyLiterals = new HashMap() ;
     private Map<String, List<String>> literalElements = new HashMap();
     private void setQuery(String query)
     {
