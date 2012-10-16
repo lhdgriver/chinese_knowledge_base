@@ -1,5 +1,3 @@
-
-
 package search;
 
 import DBHandler.AbstractDBHandler;
@@ -19,7 +17,7 @@ import java.util.Set;
  * @author lsl
  * @description 
  */
-public class TopKSummaryGraphSearch implements AbstractSearch
+public class TopKSummaryGraphSearch implements AbstractSearcher
 {
     private static AbstractDBHandler  DBHandler = new DBHandler();
     private String query = null;
@@ -27,7 +25,23 @@ public class TopKSummaryGraphSearch implements AbstractSearch
     //hash or list ---> tolerant with duplicated keywords
     private Map<String, List<String>> keyLiterals = new HashMap() ;
     private Map<String, List<String>> literalElements = new HashMap();
-    private void setQuery(String query)
+    
+    public TopKSummaryGraphSearch()
+    {
+    	try
+    	{
+    		DBHandler = new JenaDBHandler();
+    	}
+    	catch(Exception ex)
+    	{
+    		System.out.println("DBHandler Initilization Failed");
+    		System.out.println(ex.getMessage());
+    		System.out.println(ex.getStackTrace());
+    	}
+    }
+    
+    @Override
+    public void setQuery(String query)
     {
         this.query = query;
         parseQuery();
@@ -45,6 +59,7 @@ public class TopKSummaryGraphSearch implements AbstractSearch
     public KBGraph search(String query) throws IOException, ClassNotFoundException
     {
         setQuery(query);
+        /*
         //Element Mapping
         for(int i = 0; i < keywords.size(); i++)
         {
@@ -77,9 +92,15 @@ public class TopKSummaryGraphSearch implements AbstractSearch
         		augGraph.addEdge(literal, type, "unname");
         }
         //Top-k search
-        
+        */
         return new KBGraph();
     }
+
+	@Override
+	public void clearAndStop() {
+		// TODO Auto-generated method stub
+		
+	}
     
     
 }
