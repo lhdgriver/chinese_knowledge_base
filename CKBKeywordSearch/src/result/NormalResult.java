@@ -24,34 +24,63 @@ public class NormalResult
 		HashSet<Integer> URISet = new HashSet<Integer>();
 		HashSet<Integer> propertySet = new HashSet<Integer>();
 		
+		ArrayList<Statement> neighborStmts = new ArrayList<Statement>();
+		HashSet<String> neighbors = new HashSet<String>();
+		HashSet<String> commonNeighbors = new HashSet<String>();
+		
 		for(ArrayList<Integer> result : resultList)
 		{
-			ArrayList<String> newResult = new ArrayList<String>();
 			for(Integer id : result)
-				try {
+				neighbors.add(""+id);
+			for(Integer id : result)
+				try 
+				{
 					for (Statement stmt : dbHandler.getDistOne("" + id))
 					{
 						String subject = stmt.getSubject().toString();
-						String property = stmt.getPredicate().toString();
 						String object = stmt.getObject().toString();
-						if(!stmt.getObject().isResource())
-							object = "\"" + object + "\"";
-						String stmtString = subject + "\t" + property + "\t" + object;
-						if(visitedStmt.contains(stmtString)) continue;
-						visitedStmt.add(stmtString);
-						resultStmts.add(stmtString);
-						URISet.add(Integer.parseInt(subject));
+						if(neighbors.contains(subject))
+							commonNeighbors.add(subject);
+						neighbors.add(subject);
 						if(stmt.getObject().isResource())
-							URISet.add(Integer.parseInt(object));
-						propertySet.add(Integer.parseInt(property));
+						{	
+							if(neighbors.contains(object))
+								commonNeighbors.add(object);
+							neighbors.add(object);
+						}
+						neighborStmts.add(stmt);
 					}
-				} catch (NumberFormatException e) {
+				} 
+				catch (NumberFormatException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				} catch (Exception e) {
+				} 
+				catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				
+			ArrayList<String> newResult = new ArrayList<String>();
+			for(Statement stmt : neighborStmts)
+			{
+				String subject = stmt.getSubject().toString();
+				String object = stmt.getObject().toString();
+				if(!commonNeighbors.contains(subject) || (!commonNeighbors.contains(object) && stmt.getObject().isResource()))
+					continue;
+				String property = stmt.getPredicate().toString();
+				if(!stmt.getObject().isResource())
+						object = "\"" + object + "\"";
+				String stmtString = subject + "\t" + property + "\t" + object;
+				if(visitedStmt.contains(stmtString)) continue;
+				visitedStmt.add(stmtString);
+				resultStmts.add(stmtString);
+				URISet.add(Integer.parseInt(subject));
+				if(stmt.getObject().isResource())
+				URISet.add(Integer.parseInt(object));
+				propertySet.add(Integer.parseInt(property));
+			}
+		
+			
 			HashMap<Integer, String> URIMap = indexStore.getURIByIdSet(URISet);
 			HashMap<Integer, String> propertyMap = indexStore.getPerprotyByIdSet(propertySet);
 			for(String stmt: resultStmts)
@@ -75,6 +104,9 @@ public class NormalResult
 			resultStmts.clear();
 			URISet.clear();
 			propertySet.clear();
+			neighbors.clear();
+			commonNeighbors.clear();
+			neighborStmts.clear();
 		}
 	}
 	
@@ -86,7 +118,7 @@ public class NormalResult
 		for(ArrayList<String> result : results)
 		{
 			resultBuffer.append("*********************************************************************\n");
-			resultBuffer.append("Result " + i + "\n");
+			resultBuffer.append("Result " + i++ + "\n");
 			for(String line : result)
 				resultBuffer.append(line + "\n");
 			resultBuffer.append("*********************************************************************\n");

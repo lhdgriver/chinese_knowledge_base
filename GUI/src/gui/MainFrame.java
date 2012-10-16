@@ -45,7 +45,7 @@ public class MainFrame
 	private JButton queryStartBt = new JButton(new ImageIcon("material/start.png", "Query"));
 	private JButton queryStopBt = new JButton(new ImageIcon("material/stop.png", "Stop"));
 	//private CKBButton queryBt = new CKBButton("material/search-icon.png");
-	private CKBTextPane resultArea = new CKBTextPane(60,400);
+	private CKBTextPane resultArea = new CKBTextPane(600,400);
 	public JTextArea logger = new JTextArea(6, 60); 
 	
 	//listening thread: in this thread, a new query thread is created and this thread listens to it

@@ -32,10 +32,10 @@ public class CKBTextPane extends JTextPane
 		super();
 		this.setPreferredSize(new Dimension(w, l));
 		
-		StyleConstants.setForeground(quotAttr, new Color(255, 0, 255));
-		StyleConstants.setFontSize(quotAttr, 16);
+		StyleConstants.setForeground(quotAttr, new Color(0, 150, 255));
+		StyleConstants.setFontSize(quotAttr, 12);
 		StyleConstants.setForeground(normalAttr, Color.black);
-		StyleConstants.setFontSize(normalAttr, 16);
+		StyleConstants.setFontSize(normalAttr, 12);
 		this.doc = super.getStyledDocument();
 		doc.addDocumentListener(new DocumentListener()
 		{
@@ -60,10 +60,22 @@ public class CKBTextPane extends JTextPane
 			}
 			
 		});
-		
+		 
 		
 	}
 	
+	@Override
+    public boolean getScrollableTracksViewportWidth() {
+        return (getSize().width < getParent().getSize().width);
+    }
+
+    @Override
+    public void setSize(Dimension d) {
+        if (d.width < getParent().getSize().width) {
+            d.width = getParent().getSize().width;
+        }
+        super.setSize(d);
+    }
 	public void syntaxParse()
 	{
 		try
@@ -79,7 +91,8 @@ public class CKBTextPane extends JTextPane
 			if(length < docChangeLength)
 				length = docChangeLength + 1;
 			String s = doc.getText(start, length);
-			doc.setCharacterAttributes(start, length, normalAttr, false);
+			s = doc.getText(0, doc.getLength());
+			//doc.setCharacterAttributes(start, length, normalAttr, false);
 			//String tokens[] = s.split("-----");
 			//int curStart = 0;
 			//boolean isQuot = false;
@@ -94,7 +107,7 @@ public class CKBTextPane extends JTextPane
 						while(s.indexOf(tk, startPos) >= 0)
 						{
 							startPos = s.indexOf(tk, startPos) ;
-							doc.setCharacterAttributes(start + startPos, tk.length(), quotAttr, false);
+							doc.setCharacterAttributes(startPos, tk.length(), quotAttr, false);
 							startPos++;
 						}
 					}
